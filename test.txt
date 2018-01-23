@@ -1,0 +1,29 @@
+Matrix Text 1 : = 05.806;1486685082369
+Matrix Text 2 : = 06.400;1509160546441
+Matrix Text 3 : = Datamatrix not found
+Matrix Text 4 : = 06.400;1509160546092
+Matrix Text 5 : = 05.806;1486685082369
+Matrix Text 6 : = 03.111;1508146930537
+Matrix Text 7 : = Datamatrix not found
+Matrix Text 8 : = 06.400;1509160545957
+Matrix Text 9 : = 01.178;1507876193385
+Matrix Text 10 : = 03.746;1507960737790
+Matrix Text 11 : = 06.400;1507260006611
+Matrix Text 12 : = 06.400;1507260006531
+Matrix Text 13 : = 06.400;1509160546421
+Matrix Text 14 : = 00.881;1507263813431
+Matrix Text 15 : = 06.400;1509160545848
+Matrix Text 16 : = 06.400;1509160545949
+Matrix Text 17 : = 06.400;1509160546241
+Matrix Text 18 : = 06.400;1509160546290
+Matrix Text 19 : = 06.400;1509160545990
+Matrix Text 20 : = 03.111;1508146930458
+Matrix Text 21 : = Datamatrix not found
+Matrix Text 22 : = 05.806;1492653848782
+Matrix Text 23 : = 01.178;1507876190190
+Matrix Text 24 : = null
+Matrix Text 25 : = Datamatrix not found
+Matrix Text 26 : = 03.111;1508146930322
+Matrix Text 27 : = 02.800;1507258057559
+Matrix Text 28 : = 06.400;1509160546213
+Matrix Text 29 : = 16.888;1508214597534
