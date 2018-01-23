@@ -33,7 +33,6 @@ public class OpenCV {
         Imgcodecs.imwrite("/home/pi/Pictures/cropImage.jpg",image);
     }
 
-
     public Mat imageRead(String path){
         Mat img = Imgcodecs.imread(path);
         return img;
@@ -105,8 +104,6 @@ public class OpenCV {
 
         this.angle = angle;
 
-        System.out.println("Angle: " + angle);
-
         int rows = m2.rows();
         int cols = m2.cols();
 
@@ -115,13 +112,11 @@ public class OpenCV {
         rotateImage = Imgproc.getRotationMatrix2D(new Point(cols/2,rows/2),angle,1);
         Imgproc.warpAffine(m2,m2,rotateImage,size);
 
-
         return m2;
     }
 
     public Mat findDataMatrix(Mat m){
 
-        Mat original = m;
 
         Mat gray = new Mat();
 
@@ -260,6 +255,12 @@ public class OpenCV {
             Mat prepareMat = prepareDataMatrix(m, index);
 
             try {
+                showImage(Mat2BufferedImage(prepareMat));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try {
                 decodeString = decodeDataMatrix(Mat2BufferedImage(prepareMat));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -274,6 +275,121 @@ public class OpenCV {
 
 
         return decodeString;
+    }
+
+    public Mat findRolPacket(Mat m){
+
+        Mat origin = m;
+
+        Mat gray = new Mat();
+
+        Imgproc.cvtColor(m,gray, Imgproc.COLOR_RGB2GRAY);
+
+        Mat imgThres = new Mat();
+
+        Imgproc.threshold(gray,imgThres,120,255, Imgproc.THRESH_BINARY);
+
+        Mat imgErod = new Mat();
+
+        int erosion_size = 10;
+
+        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*erosion_size + 1, 1*erosion_size+1));
+
+        Imgproc.erode(imgThres,imgErod,element);
+
+        List<MatOfPoint> points = new ArrayList<>();
+
+        Mat hierarchy = new Mat();
+
+        Imgproc.findContours(imgErod, points, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+
+        Rect muellerLogo = new Rect();
+
+        int widthMin = 1000;
+        int widthMax = 1200;
+        int heightMin = 200;
+        int heightMax = 300;
+
+
+        for(int i = 0; i<points.size();i++){
+            Rect rect = Imgproc.boundingRect(points.get(i));
+            if((rect.width > widthMin && rect.width < widthMax) && ((rect.height > heightMin && rect.height < heightMax))) {
+                //Imgproc.rectangle(origin, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 255, 0));
+                muellerLogo.height = rect.height+100;
+                muellerLogo.width = rect.width+200;
+                muellerLogo.x = rect.x+330;
+                muellerLogo.y = rect.y+325;
+            }
+        }
+        Mat cropImage = new Mat(origin,muellerLogo);
+
+
+
+        return cropImage;
+
+
+
+    }
+
+    public int countBlackWheels(Mat m){
+
+       Mat origin2 = m;
+
+        Mat gray = new Mat();
+
+        Imgproc.cvtColor(m,gray, Imgproc.COLOR_RGB2GRAY);
+
+        Rect rolle4Rect = new Rect();
+        rolle4Rect.x = 300;
+        rolle4Rect.y = 50;
+        rolle4Rect.height = 280;
+        rolle4Rect.width = 150;
+
+        Rect rolle3Rect = new Rect();
+        rolle3Rect.x = 560;
+        rolle3Rect.y = 50;
+        rolle3Rect.height = 280;
+        rolle3Rect.width = 150;
+
+        Rect rolle2Rect = new Rect();
+        rolle2Rect.x = 820;
+        rolle2Rect.y = 50;
+        rolle2Rect.height = 280;
+        rolle2Rect.width = 150;
+
+        Mat rolle4 = new Mat(gray,rolle4Rect);
+        Mat rolle3 = new Mat(gray,rolle3Rect);
+        Mat rolle2 = new Mat(gray,rolle2Rect);
+
+
+        Imgproc.threshold(rolle4,rolle4,120,255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(rolle3,rolle3,120,255, Imgproc.THRESH_BINARY);
+        Imgproc.threshold(rolle2,rolle2,120,255, Imgproc.THRESH_BINARY);
+
+
+        int erosion_size = 5;
+        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*erosion_size, 1*erosion_size));
+        Imgproc.morphologyEx(rolle4,rolle4,Imgproc.MORPH_OPEN,element);
+        Imgproc.morphologyEx(rolle3,rolle3,Imgproc.MORPH_OPEN,element);
+        Imgproc.morphologyEx(rolle2,rolle2,Imgproc.MORPH_OPEN,element);
+
+        int[] numberWhitePixel = new int[3];
+
+        numberWhitePixel[0] = Core.countNonZero(rolle4);
+        numberWhitePixel[1] = Core.countNonZero(rolle3);
+        numberWhitePixel[2] = Core.countNonZero(rolle2);
+
+        int numberOfBlackWheels = 1;
+
+        for(int i = 0; i < numberWhitePixel.length; i++){
+            if(numberWhitePixel[i] < 10000){
+                numberOfBlackWheels++;
+            }
+        }
+
+        return  numberOfBlackWheels;
+
     }
 
 
