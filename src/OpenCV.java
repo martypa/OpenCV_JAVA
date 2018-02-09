@@ -255,12 +255,6 @@ public class OpenCV {
             Mat prepareMat = prepareDataMatrix(m, index);
 
             try {
-                showImage(Mat2BufferedImage(prepareMat));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            try {
                 decodeString = decodeDataMatrix(Mat2BufferedImage(prepareMat));
             } catch (IOException e) {
                 e.printStackTrace();

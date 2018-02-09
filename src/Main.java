@@ -18,14 +18,14 @@ public class Main {
         SSH ftp = new SSH();
         OpenCV openCV = new OpenCV();
 
-        ftp.takeRemotePicture();
+        //ftp.takeRemotePicture();
 
-        ftp.copyRemoteFile("/home/pi/Pictures/Development/image.jpg","C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA");
-
-
+        //ftp.copyRemoteFile("/home/pi/Pictures/Development/image.jpg","C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA");
 
 
-        Mat image = openCV.imageRead("C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA\\image.jpg");
+
+
+        Mat image = openCV.imageRead("C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA\\image1.jpg");
 
         Mat img_right_position = openCV.doRightOrientation(image);
 
@@ -45,11 +45,11 @@ public class Main {
 
 
 
-        try {
+      /*  try {
             Files.delete(Paths.get("C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA\\image.jpg"));
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 
