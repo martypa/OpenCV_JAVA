@@ -2,18 +2,27 @@ import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.datamatrix.DataMatrixReader;
+import com.hopding.jrpicam.RPiCamera;
+import com.hopding.jrpicam.enums.AWB;
+import com.hopding.jrpicam.enums.Exposure;
+import com.hopding.jrpicam.exceptions.FailedToRunRaspistillException;
+import com.pi4j.io.gpio.*;
+import jdk.internal.dynalink.linker.LinkerServices;
 import org.opencv.core.*;
 import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.videoio.VideoCapture;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -198,17 +207,46 @@ public class OpenCV {
         return imgMatrix;
     }
 
-    public Mat prepareDataMatrix(Mat m, int erosion_size){
+    public Mat prepareDataMatrix(Mat m, int c, int o, int d){
+
+        int indexC = 5;
+        int indexO = 3;
+        int indexD = 2;
+
+        indexC = c;
+        indexO = o;
+        indexD = d;
 
         Mat imgThres = new Mat();
 
         Imgproc.threshold(m,imgThres,120,255, Imgproc.THRESH_BINARY);
 
-        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*erosion_size + 1, 1*erosion_size +1));
+        Mat element_close = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*indexC + 1,1*indexC + 1));
 
-        Imgproc.morphologyEx(imgThres,imgThres, Imgproc.MORPH_OPEN,element);
+        Mat element_open = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2*indexO + 1, 1* indexO + 1));
 
-        Imgproc.morphologyEx(imgThres,imgThres, Imgproc.MORPH_CLOSE,element);
+        Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*indexD, 1* indexD));
+
+
+
+        Imgproc.morphologyEx(imgThres,imgThres, Imgproc.MORPH_CLOSE,element_close);
+
+        Imgproc.morphologyEx(imgThres,imgThres, Imgproc.MORPH_OPEN,element_open);
+
+        Imgproc.morphologyEx(imgThres,imgThres,Imgproc.MORPH_DILATE,element_dilate);
+
+
+ /*       try {
+            showImage(Mat2BufferedImage(imgThres));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            System.out.println(decodeDataMatrix(Mat2BufferedImage(imgThres)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
 
         return imgThres;
     }
@@ -248,24 +286,35 @@ public class OpenCV {
 
     public String completeTest(Mat m){
 
-        int index = 1;
-        String decodeString;
+        String decodeString = null;
 
-        do {
-            Mat prepareMat = prepareDataMatrix(m, index);
-
-            try {
-                decodeString = decodeDataMatrix(Mat2BufferedImage(prepareMat));
-            } catch (IOException e) {
-                e.printStackTrace();
-                decodeString = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-                decodeString = null;
+        for(int c = 1; c < 5; c++) {
+            for (int o = 1; o < 5; o++) {
+                for(int d = 1; d < 5; d++) {
+                    Mat prepareMat = prepareDataMatrix(m,c,o,d);
+                    try {
+                        String decode = decodeDataMatrix(Mat2BufferedImage(prepareMat));
+                        if(decode != null){
+                            decodeString = decode;
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if(decodeString != null){
+                        break;
+                    }
+                }
+                if(decodeString != null){
+                    break;
+                }
             }
+            if(decodeString != null){
+                break;
+            }
+        }
 
-            index++;
-        }while(decodeString == null && index < 11);
 
 
         return decodeString;
@@ -386,6 +435,116 @@ public class OpenCV {
 
     }
 
+    public Mat caputrePicture(VideoCapture camera){
+        Mat Frame = new Mat();
+        camera.read(Frame);
+        return Frame;
+    }
+
+    private Double imageBlurDetection(Mat m) throws Exception {
+        int kernel_size = 3;
+        int scale = 1;
+        int delta = 0;
+        int ddepth = CvType.CV_8U;
+
+        Mat gray = new Mat();
+
+        Imgproc.cvtColor(m,gray,Imgproc.COLOR_RGB2GRAY);
+
+        Imgproc.Laplacian(gray,gray,ddepth,kernel_size,scale,delta,Core.BORDER_DEFAULT);
+
+        MatOfDouble mean = new MatOfDouble();
+        MatOfDouble stddev = new MatOfDouble();
+
+        Core.meanStdDev(gray,mean,stddev);
+
+        double standardabweichung = stddev.get(0,0)[0];
+        double durchschnitt = mean.get(0,0)[0];
+
+        return durchschnitt;
+    }
+
+    public BufferedImage Mat2BufferedImage2(Mat m){
+// source: http://answers.opencv.org/question/10344/opencv-java-load-image-to-gui/
+// Fastest code
+// The output can be assigned either to a BufferedImage or to an Image
+
+        int type = BufferedImage.TYPE_BYTE_GRAY;
+        if ( m.channels() > 1 ) {
+            type = BufferedImage.TYPE_3BYTE_BGR;
+        }
+        int bufferSize = m.channels()*m.cols()*m.rows();
+        byte [] b = new byte[bufferSize];
+        m.get(0,0,b); // get all the pixels
+        BufferedImage image = new BufferedImage(m.cols(),m.rows(), type);
+        final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
+        System.arraycopy(b, 0, targetPixels, 0, b.length);
+        return image;
+
+    }
+
+    public Mat matify(BufferedImage im) {
+        // Convert INT to BYTE
+        //im = new BufferedImage(im.getWidth(), im.getHeight(),BufferedImage.TYPE_3BYTE_BGR);
+        // Convert bufferedimage to byte array
+        byte[] pixels = ((DataBufferByte) im.getRaster().getDataBuffer())
+                .getData();
+
+        // Create a Matrix the same size of image
+        Mat image = new Mat(im.getHeight(), im.getWidth(), CvType.CV_8UC3);
+        // Fill Matrix with image values
+        image.put(0, 0, pixels);
+
+        return image;
+
+    }
+
+    public void detectLogo(Mat m){
+        Mat thres = new Mat();
+
+        Mat m2 = m;
+
+        Imgproc.cvtColor(m,thres, Imgproc.COLOR_RGB2GRAY);
+
+        Imgproc.threshold(thres,thres,120,255, Imgproc.THRESH_BINARY);
+
+        List<MatOfPoint> points = new ArrayList<>();
+
+        Mat hierarchy = new Mat();
+
+        RotatedRect rect2 = null;
+
+
+        Imgproc.findContours(thres, points, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+        for(int i = 0; i<points.size();i++){
+            Rect rect = Imgproc.boundingRect(points.get(i));
+            if((rect.width > 900 && rect.width < 1500) && ((rect.height > 250 && rect.height < 500))) {
+                Imgproc.rectangle(m2, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 255, 0));
+                MatOfPoint2f pointf = new MatOfPoint2f();
+                points.get(i).convertTo(pointf, CvType.CV_32FC2);
+                rect2 = Imgproc.minAreaRect(pointf);
+            }
+        }
+
+        if(rect2 != null) {
+            Point center = rect2.center;
+            double x = center.x;
+            double y = center.y;
+            System.out.println("Center X : " + x);
+            System.out.println("Center Y : " + y);
+        }
+
+        Rect rect = new Rect();
+        rect.x = 564;
+        rect.y = 529;
+        rect.height = 250;
+        rect.width = 1100;
+
+        Imgproc.rectangle(m2,new Point(rect.x,rect.y),new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(255,0,0));
+
+        showImage(Mat2BufferedImage2(m2));
+
+    }
 
 
 }

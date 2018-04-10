@@ -13,5 +13,8 @@
     <orderEntry type="library" name="commons-net-3.6-sources" level="project" />
     <orderEntry type="library" name="com.jcraft:jsch:0.1.54" level="project" />
     <orderEntry type="library" name="pi4j-core-javadoc" level="project" />
+    <orderEntry type="library" name="jrpicam-1.1.1" level="project" />
+    <orderEntry type="library" name="com.pi4j:pi4j-core:1.1" level="project" />
+    <orderEntry type="library" name="com.pi4j:pi4j-gpio-extension:1.1" level="project" />
   </component>
 </module>

@@ -18,38 +18,42 @@ public class Main {
         SSH ftp = new SSH();
         OpenCV openCV = new OpenCV();
 
-        //ftp.takeRemotePicture();
+        ftp.takeRemotePicture();
 
-        //ftp.copyRemoteFile("/home/pi/Pictures/Development/image.jpg","C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA");
+        ftp.copyRemoteFile("/home/pi/Pictures/Development/image.jpg","C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA");
 
-
-
-
-        Mat image = openCV.imageRead("C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA\\image1.jpg");
+        Mat image = openCV.imageRead("C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA\\image.jpg");
 
         Mat img_right_position = openCV.doRightOrientation(image);
 
         Mat rolPacket = openCV.findRolPacket(img_right_position);
 
-        int blackWheels = openCV.countBlackWheels(rolPacket);
+        int blackWheels = 0;
+
+        try {
+          blackWheels = openCV.countBlackWheels(rolPacket);
+        }catch (Exception ex){
+        }
 
         System.out.println("Es gibt " + blackWheels + " schwarze Wheels");
 
         Mat dataMatrix = openCV.findDataMatrix(img_right_position);
 
-        String matrixCode = openCV.completeTest(dataMatrix);
+        String matrixCode = null;
+
+        try{
+            matrixCode = openCV.completeTest(dataMatrix);
+        }catch (Exception ex){
+        }
 
         System.out.println("Datamatrix Code: " + matrixCode);
 
 
-
-
-
-      /*  try {
+        try {
             Files.delete(Paths.get("C:\\Users\\patrick.marty\\Pictures\\OpenCV_JAVA\\image.jpg"));
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 
 
