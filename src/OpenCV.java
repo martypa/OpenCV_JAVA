@@ -43,7 +43,7 @@ public class OpenCV {
     }
 
     public Mat imageRead(String path){
-        Mat img = Imgcodecs.imread(path);
+        Mat img = Imgcodecs.imread(path,1);
         return img;
     }
 
@@ -235,18 +235,30 @@ public class OpenCV {
 
         Imgproc.morphologyEx(imgThres,imgThres,Imgproc.MORPH_DILATE,element_dilate);
 
+        return imgThres;
+    }
 
- /*       try {
-            showImage(Mat2BufferedImage(imgThres));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public Mat prepareDataMatrixNew(Mat m, int c, int o, int e){
 
-        try {
-            System.out.println(decodeDataMatrix(Mat2BufferedImage(imgThres)));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
+        Mat imgThres = new Mat();
+
+        Imgproc.threshold(m,imgThres,125,255, Imgproc.THRESH_BINARY_INV);
+
+        int close = c;
+        Mat element_close = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*close + 0,1*close + 0));
+        Imgproc.morphologyEx(imgThres,imgThres, Imgproc.MORPH_CLOSE,element_close);
+
+        int open = o;
+        Mat element_open = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*open + 0,1*open + 0));
+        Imgproc.morphologyEx(imgThres,imgThres, Imgproc.MORPH_OPEN,element_open);
+
+
+        int eros = e;
+        Mat element_eros = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1*eros + 0,1*eros + 0));
+        Imgproc.morphologyEx(imgThres,imgThres, Imgproc.MORPH_ERODE,element_eros);
+
+
+        Imgproc.threshold(imgThres,imgThres,125,255, Imgproc.THRESH_BINARY_INV);
 
         return imgThres;
     }
@@ -288,10 +300,10 @@ public class OpenCV {
 
         String decodeString = null;
 
-        for(int c = 1; c < 5; c++) {
-            for (int o = 1; o < 5; o++) {
-                for(int d = 1; d < 5; d++) {
-                    Mat prepareMat = prepareDataMatrix(m,c,o,d);
+        for(int c = 3; c < 8; c++) {
+            for (int o = 3; o < 8; o++) {
+                for(int d = 2; d < 8; d++) {
+                    Mat prepareMat = prepareDataMatrixNew(m,c,o,d);
                     try {
                         String decode = decodeDataMatrix(Mat2BufferedImage(prepareMat));
                         if(decode != null){
